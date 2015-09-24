@@ -257,6 +257,13 @@ static int create_and_bind(char *port, int socktype)
         if (sfd == -1)
             continue;
 
+        // Avoid "Address already in use." error.
+        int yes=1;
+
+        if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+            perror("setsockopt");
+        } 
+
         s = bind(sfd, rp->ai_addr, rp->ai_addrlen);
         if (s == 0)
         {
@@ -280,7 +287,6 @@ static int create_and_bind(char *port, int socktype)
         if (verbose) {
             fprintf (stderr, "Could not bind to port %s\n", port);
         }
-        close(sfd);
         return -1;
     }
 
