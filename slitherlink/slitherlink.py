@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime
 
 class Slitherlink:
     def __init__(self, constraints = None):
@@ -10,7 +11,6 @@ class Slitherlink:
             self.v_edges = [[0 for _ in range(self.cols + 1)] for _ in range(self.rows)]
             self.r = 0
             self.c = 0
-            self.constraints = constraints
 
     def copy(self):
         o = Slitherlink()
@@ -113,17 +113,19 @@ class Slitherlink:
         for i in range(self.rows+1):
             for j in range(self.cols):
                 if self.h_edges[i][j] == 1:
-                    sys.stdout.write(' ---')
+                    sys.stdout.write('*---')
                 else:
-                    sys.stdout.write('    ')
-            sys.stdout.write('\n')
+                    sys.stdout.write('*   ')
+            sys.stdout.write('*\n')
 
             if i < self.rows:
                 for j in range(self.cols + 1):
+                    tmp = [' ']*4
                     if self.v_edges[i][j] == 1:
-                        sys.stdout.write('|   ')
-                    else:
-                        sys.stdout.write('    ')
+                        tmp[0] = '|'
+                    if j < self.cols and self.constraints[i][j] != 255:
+                        tmp[2] = str(self.constraints[i][j])
+                    sys.stdout.write(''.join(tmp))
                 sys.stdout.write('\n')
 
 def set_initial_position(p):
@@ -153,6 +155,7 @@ def solve(p, counter):
         sys.stdout.write('\n')'''
         if is_solved(p):
             counter[0] += 1
+            print('[{}] {}-th solution'.format(str(datetime.now()), counter[0]))
             p.show()
             sys.stdout.write('\n')
 
@@ -187,14 +190,34 @@ def solve(p, counter):
             p1.move_down()
             solve(p1, counter)
 
-constraints = [
-    [255, 255, 255],
-    [255,   3, 255],
-    [255, 255, 255],
+def parse_puzzle(puzzle):
+    fields = puzzle.split()
+    assert(len(fields) == 3)
+    rows = int(fields[0])
+    cols = int(fields[1])
+    assert(len(fields[2]) == rows * cols)
+    constraints = [[0]*cols for _ in range(rows)]
+    for i in range(rows):
+        for j in range(cols):
+            c = fields[2][i*cols + j]
+            if c == '.':
+                constraints[i][j] = 255
+            else:
+                constraints[i][j] = int(c)
+    return constraints
+
+puzzles = [
+  #'6 6 ....0.33..1...12....20...1..11.2....',
+  # '7 7 ....231213.2...1..213.3.3..23.0.1.3.32..3.3.222.3',
+  '7 7 .33.3....0..122.23.21....2.....2...32.32..1..22.3',
 ]
 
-p = Slitherlink(constraints)
-counter = [0]
-set_initial_position(p)
-solve(p, counter)
-print('{} solutions'.format(counter[0]))
+for p in puzzles:
+    print('[{}]'.format(str(datetime.now())))
+    constraints = parse_puzzle(p)
+    s = Slitherlink(constraints)
+    s.show()
+    print('')
+    counter = [0]
+    set_initial_position(s)
+    solve(s, counter)
