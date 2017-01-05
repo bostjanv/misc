@@ -1,75 +1,81 @@
 import sys
 
 class Slitherlink:
-    ROWS = 6
-    COLS = 6
-
-    def __init__(self):
-        self.h_edges = [[0 for _ in range(Slitherlink.COLS)] for _ in range(Slitherlink.ROWS + 1)]
-        self.v_edges = [[0 for _ in range(Slitherlink.COLS + 1)] for _ in range(Slitherlink.ROWS)]
-        self.r = 0
-        self.c = 0
+    def __init__(self, constraints = None):
+        if constraints is not None:
+            self.rows = len(constraints)
+            self.cols = len(constraints[0])
+            self.constraints = constraints
+            self.h_edges = [[0 for _ in range(self.cols)] for _ in range(self.rows + 1)]
+            self.v_edges = [[0 for _ in range(self.cols + 1)] for _ in range(self.rows)]
+            self.r = 0
+            self.c = 0
+            self.constraints = constraints
 
     def copy(self):
         o = Slitherlink()
+        o.rows = self.rows
+        o.cols = self.cols
+        o.constraints = self.constraints
         o.h_edges = [x[:] for x in self.h_edges]
         o.v_edges = [x[:] for x in self.v_edges]
         o.r = self.r
         o.c = self.c
         return o
 
+    def count_neighbours(self, r, c):
+        count = 0
+        if r > 0 and self.v_edges[r - 1][c] == 1:
+            count += 1
+        if r < self.rows and self.v_edges[r][c] == 1:
+            count += 1
+        if c > 0 and self.h_edges[r][c - 1] == 1:
+            count += 1
+        if c < self.cols and self.h_edges[r][c] == 1:
+            count += 1
+
+        return count
+
     def is_right_valid(self):
-        if self.c == Slitherlink.COLS or \
+        if self.c == self.cols or \
                 self.h_edges[self.r][self.c] == 1:
-                    return False        
-        elif self.r > 0 and self.r < Slitherlink.ROWS:
-            if self.v_edges[self.r - 1][self.c + 1] == 1 and \
-                    self.v_edges[self.r][self.c + 1] == 1:
-                        return False
-            else:
-                return True
+                    return False
         else:
-            return True
+            if self.count_neighbours(self.r, self.c + 1) <= 1:
+                return True
+            else:
+                return False
 
     def is_left_valid(self):
         if self.c == 0 or self.h_edges[self.r][self.c - 1] == 1:
             return False
-        elif self.r > 0 and self.r < Slitherlink.ROWS:
-            if self.v_edges[self.r - 1][self.c - 1] == 1 and \
-                    self.v_edges[self.r][self.c - 1] == 1:
-                        return False
-            else:
-                return True
         else:
-            return True
+            if self.count_neighbours(self.r, self.c - 1) <= 1:
+                return True
+            else:
+                return False
 
     def is_down_valid(self):
-        if self.r == Slitherlink.COLS or \
+        if self.r == self.cols or \
                 self.v_edges[self.r][self.c] == 1:
                     return False
-        elif self.c > 0 and self.c < Slitherlink.COLS:
-            if self.h_edges[self.r + 1][self.c - 1] == 1 and \
-                    self.h_edges[self.r + 1][self.c] == 1:
-                        return False
-            else:
-                return True
         else:
-            return True
+            if self.count_neighbours(self.r + 1, self.c) <= 1:
+                return True
+            else:
+                return False
 
     def is_up_valid(self):
         if self.r == 0 or self.v_edges[self.r - 1][self.c] == 1:
             return False
-        elif self.c > 0 and self.c < Slitherlink.COLS:
-            if self.h_edges[self.r - 1][self.c - 1] == 1 and \
-                    self.h_edges[self.r - 1][self.c] == 1:
-                        return False
-            else:
-                return True
         else:
-            return True
+            if self.count_neighbours(self.r - 1, self.c) <= 1:
+                return True
+            else:
+                return False
 
     def move_right(self):
-        assert(self.c < Slitherlink.COLS)
+        assert(self.c < self.cols)
         self.h_edges[self.r][self.c] = 1
         self.c += 1
 
@@ -79,7 +85,7 @@ class Slitherlink:
         self.h_edges[self.r][self.c] = 1
 
     def move_down(self):
-        assert(self.r < Slitherlink.ROWS)
+        assert(self.r < self.rows)
         self.v_edges[self.r][self.c] = 1
         self.r += 1
 
@@ -89,16 +95,16 @@ class Slitherlink:
         self.v_edges[self.r][self.c] = 1
 
     def show(self):
-        for i in range(Slitherlink.ROWS+1):
-            for j in range(Slitherlink.COLS):
+        for i in range(self.rows+1):
+            for j in range(self.cols):
                 if self.h_edges[i][j] == 1:
                     sys.stdout.write(' --')
                 else:
                     sys.stdout.write('   ')
             sys.stdout.write('\n')
 
-            if i < Slitherlink.ROWS:
-                for j in range(Slitherlink.COLS + 1):
+            if i < self.rows:
+                for j in range(self.cols + 1):
                     if self.v_edges[i][j] == 1:
                         sys.stdout.write('|  ')
                     else:
@@ -106,20 +112,28 @@ class Slitherlink:
                 sys.stdout.write('\n')
 
 def solve(p, counter):
-    valid = [
-        p.is_left_valid(),
-        p.is_right_valid(),
-        p.is_up_valid(),
-        p.is_down_valid()
-    ]
-
-    if not any(valid):
+    n = p.count_neighbours(p.r, p.c)
+    assert(n <= 2)
+    if n == 2:
         counter[0] += 1
         if counter[0] % 1000000 == 0:
-            print(counter[0])
-        #p.show()
-        #sys.stdout.write('\n')        
+           print(counter[0])
+        '''p.show()
+        sys.stdout.write('\n')'''
     else:
+        valid = [
+            p.is_left_valid(),
+            p.is_right_valid(),
+            p.is_up_valid(),
+            p.is_down_valid()
+        ]
+
+        # assert(any(valid))
+        '''if not any(valid):
+            print('nowhere to move')
+            p.show()
+            sys.stdout.write('\n')'''
+
         if valid[0]:
             p1 = p.copy()
             p1.move_left()
@@ -137,6 +151,13 @@ def solve(p, counter):
             p1.move_down()
             solve(p1, counter)
 
-p = Slitherlink()
+constraints = [
+    [255, 255, 255],
+    [255,   3, 255],
+    [255, 255, 255],
+]
+
+p = Slitherlink(constraints)
 counter = [0]
 solve(p, counter)
+print('{} solutions'.format(counter[0]))
