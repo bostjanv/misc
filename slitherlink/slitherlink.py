@@ -36,43 +36,58 @@ class Slitherlink:
 
         return count
 
-    def is_right_valid(self):
-        if self.c == self.cols or \
-                self.h_edges[self.r][self.c] == 1:
-                    return False
+    def count_cell_edges(self, r, c):
+        count = self.h_edges[r][c] + self.h_edges[r + 1][c] + \
+                self.v_edges[r][c] + self.v_edges[r][c + 1]
+        return count
+
+    def check_constraint(self, r, c):
+        count = self.h_edges[r][c] + self.h_edges[r + 1][c] + \
+                self.v_edges[r][c] + self.v_edges[r][c + 1]
+        if count < self.constraints[r][c]:
+            return True
         else:
-            if self.count_neighbours(self.r, self.c + 1) <= 1:
-                return True
-            else:
-                return False
+            return False
+
+    def is_right_valid(self):
+        if (self.c == self.cols or self.h_edges[self.r][self.c] == 1) or \
+                (self.count_neighbours(self.r, self.c + 1) > 1):
+                    return False
+        elif (self.r == 0 or self.check_constraint(self.r - 1, self.c)) and \
+                (self.r == self.rows or self.check_constraint(self.r, self.c)):
+                    return True
+        else:
+            return False
 
     def is_left_valid(self):
-        if self.c == 0 or self.h_edges[self.r][self.c - 1] == 1:
-            return False
+        if (self.c == 0 or self.h_edges[self.r][self.c - 1] == 1) or \
+                (self.count_neighbours(self.r, self.c - 1) > 1):
+                    return False
+        elif (self.r == 0 or self.check_constraint(self.r - 1, self.c - 1)) and \
+                (self.r == self.rows or self.check_constraint(self.r, self.c - 1)):
+                    return True
         else:
-            if self.count_neighbours(self.r, self.c - 1) <= 1:
-                return True
-            else:
-                return False
+            return False
 
     def is_down_valid(self):
-        if self.r == self.cols or \
-                self.v_edges[self.r][self.c] == 1:
+        if (self.r == self.cols or self.v_edges[self.r][self.c] == 1) or \
+                (self.count_neighbours(self.r + 1, self.c) > 1):
                     return False
+        elif (self.c == 0 or self.check_constraint(self.r, self.c - 1)) and \
+                (self.c == self.cols or self.check_constraint(self.r, self.c)):
+                    return True
         else:
-            if self.count_neighbours(self.r + 1, self.c) <= 1:
-                return True
-            else:
-                return False
+            return False
 
     def is_up_valid(self):
-        if self.r == 0 or self.v_edges[self.r - 1][self.c] == 1:
-            return False
+        if (self.r == 0 or self.v_edges[self.r - 1][self.c] == 1) or \
+                (self.count_neighbours(self.r - 1, self.c) > 1):
+                    return False
+        elif (self.c == 0 or self.check_constraint(self.r - 1, self.c - 1)) and \
+                (self.c == self.cols or self.check_constraint(self.r - 1, self.c)):
+                    return True
         else:
-            if self.count_neighbours(self.r - 1, self.c) <= 1:
-                return True
-            else:
-                return False
+            return False
 
     def move_right(self):
         assert(self.c < self.cols)
@@ -98,28 +113,49 @@ class Slitherlink:
         for i in range(self.rows+1):
             for j in range(self.cols):
                 if self.h_edges[i][j] == 1:
-                    sys.stdout.write(' --')
+                    sys.stdout.write(' ---')
                 else:
-                    sys.stdout.write('   ')
+                    sys.stdout.write('    ')
             sys.stdout.write('\n')
 
             if i < self.rows:
                 for j in range(self.cols + 1):
                     if self.v_edges[i][j] == 1:
-                        sys.stdout.write('|  ')
+                        sys.stdout.write('|   ')
                     else:
-                        sys.stdout.write('   ')
+                        sys.stdout.write('    ')
                 sys.stdout.write('\n')
+
+def set_initial_position(p):
+    for i in range(len(p.constraints)):
+        for j in range(len(p.constraints[:])):
+            if p.constraints[i][j] == 3:
+                p.r, p.c = i, j
+                return
+
+def is_solved(p):
+    for i in range(len(p.constraints)):
+        for j in range(len(p.constraints[:])):
+            c = p.constraints[i][j]
+            if c != 255 and p.count_cell_edges(i, j) != c:
+                return False
+    return True
+
 
 def solve(p, counter):
     n = p.count_neighbours(p.r, p.c)
     assert(n <= 2)
     if n == 2:
-        counter[0] += 1
+        '''counter[0] += 1
         if counter[0] % 1000000 == 0:
            print(counter[0])
-        '''p.show()
+        p.show()
         sys.stdout.write('\n')'''
+        if is_solved(p):
+            counter[0] += 1
+            p.show()
+            sys.stdout.write('\n')
+
     else:
         valid = [
             p.is_left_valid(),
@@ -159,5 +195,6 @@ constraints = [
 
 p = Slitherlink(constraints)
 counter = [0]
+set_initial_position(p)
 solve(p, counter)
 print('{} solutions'.format(counter[0]))
