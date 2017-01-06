@@ -135,29 +135,44 @@ def set_initial_position(p):
                 p.r, p.c = i, j
                 return
 
+def is_connected(p):
+    for i in range(p.rows + 1):
+        for j in range(p.cols + 1):
+            n = p.count_neighbours(i, j)
+            if n != 0 and n != 2:
+                assert(n == 1)
+                return False
+    return True
+
 def is_solved(p):
-    for i in range(len(p.constraints)):
-        for j in range(len(p.constraints[:])):
+    for i in range(p.rows):
+        for j in range(p.cols):
             c = p.constraints[i][j]
             if c != 255 and p.count_cell_edges(i, j) != c:
                 return False
     return True
 
+def reset_position(p):
+    for i in range(p.rows + 1):
+        for j in range(p.cols + 1):
+            n = p.count_neighbours(i, j)
+            if n == 1:
+                p.r, p.c = i, j
 
 def solve(p, counter):
     n = p.count_neighbours(p.r, p.c)
     assert(n <= 2)
     if n == 2:
-        '''counter[0] += 1
-        if counter[0] % 1000000 == 0:
-           print(counter[0])
-        p.show()
-        sys.stdout.write('\n')'''
-        if is_solved(p):
-            counter[0] += 1
-            print('[{}] {}-th solution'.format(str(datetime.now()), counter[0]))
-            p.show()
-            sys.stdout.write('\n')
+        # We made a connection with a previous segment
+        if is_connected(p):
+            if is_solved(p):
+                counter[0] += 1
+                print('[{}] {}-th solution'.format(str(datetime.now()), counter[0]))
+                p.show()
+                sys.stdout.write('\n')
+        else:
+            reset_position(p)
+            solve(p, counter)
 
     else:
         valid = [
@@ -206,9 +221,10 @@ def parse_puzzle(puzzle):
                 constraints[i][j] = int(c)
     return constraints
 
+'''
 puzzles = [
-  #'6 6 ....0.33..1...12....20...1..11.2....',
-  # '7 7 ....231213.2...1..213.3.3..23.0.1.3.32..3.3.222.3',
+  '6 6 ....0.33..1...12....20...1..11.2....',
+  '7 7 ....231213.2...1..213.3.3..23.0.1.3.32..3.3.222.3',
   '7 7 .33.3....0..122.23.21....2.....2...32.32..1..22.3',
 ]
 
@@ -221,3 +237,47 @@ for p in puzzles:
     counter = [0]
     set_initial_position(s)
     solve(s, counter)
+'''
+
+print('[{}]'.format(str(datetime.now())))
+constraints = parse_puzzle('7 7 ....231213.2...1..213.3.3..23.0.1.3.32..3.3.222.3')
+s = Slitherlink(constraints)
+s.v_edges[6][0] = 1
+s.h_edges[7][0] = 1
+s.v_edges[6][7] = 1
+s.h_edges[7][6] = 1
+s.v_edges[3][2] = 1
+s.h_edges[4][1] = 1
+s.v_edges[3][3] = 1
+s.h_edges[4][3] = 1
+
+s.h_edges[4][0] = 1
+s.v_edges[4][0] = 1
+s.h_edges[5][0] = 1
+s.h_edges[5][1] = 1
+s.v_edges[5][2] = 1
+# s.h_edges[6][1] = 1
+# s.h_edges[6][2] = 1
+
+s.r = 7
+s.c = 1
+s.show()
+
+counter = [0]
+solve(s, counter)
+print('[{}]'.format(str(datetime.now())))
+
+'''
+constraints = parse_puzzle('3 3 ......3.3')
+s = Slitherlink(constraints)
+s.v_edges[2][0] = 1
+s.h_edges[3][0] = 1
+s.v_edges[2][3] = 1
+s.h_edges[3][2] = 1
+s.r = 2
+s.c = 0
+s.show()
+
+counter = [0]
+solve(s, counter)
+'''
